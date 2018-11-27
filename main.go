@@ -2,9 +2,11 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -24,19 +26,32 @@ type config struct {
 
 func main() {
 
+	f, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening log file: %v\n", err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
+	log.Printf("File mover started..\n")
 	c, err := readConfig()
 	if err != nil {
 		log.Fatal("error while reading configuration file")
 	}
 
 	for {
-		moveFile(c)
+		if err := moveFile(c); err != nil {
+			log.Fatal(err.Error() + "\n")
+		}
+
 		time.Sleep(time.Second * 100)
 	}
 
 }
 
 func readConfig() (*config, error) {
+	log.Println("Reading conf.toml")
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
@@ -53,21 +68,22 @@ func readConfig() (*config, error) {
 
 func moveFile(c *config) error {
 
+	log.Printf("Started to moving files\n")
 	files, err := ioutil.ReadDir(c.Source)
 	if err != nil {
 		return errors.New("Source destination location doesnt exists " + err.Error())
 	}
+	if err := checkDestinationDir(c); err != nil {
+		return errors.New("Destination location doest exists " + err.Error())
+	}
 	if len(files) > 0 {
-		if err := checkDestinationDir(c); err != nil {
-			return errors.New("Destination location doest exists " + err.Error())
-		}
-		oldLoc := c.Source + files[0].Name()
-		newLoc := c.Dest + c.File
+		oldLoc := c.Source + "/" + files[0].Name()
+		newLoc := c.Dest + "/" + c.File
 		err := os.Rename(oldLoc, newLoc)
 		if err != nil {
 			return errors.New("Failed to move files " + err.Error())
 		}
-		log.Printf("%s is moved to %s", oldLoc, newLoc)
+		log.Printf("%s is moved to %s\n", oldLoc, newLoc)
 	}
 	return nil
 }
@@ -75,4 +91,15 @@ func moveFile(c *config) error {
 func checkDestinationDir(c *config) error {
 	_, err := ioutil.ReadDir(c.Dest)
 	return err
+}
+
+func fileRefractor(filename string) error {
+	f, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	data := string(f)
+	newData := strings.Replace(data, "\\", "/", 10)
+	fmt.Println(newData)
+	return nil
 }
