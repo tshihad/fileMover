@@ -27,7 +27,7 @@ func Controller() {
 			log.Fatal(err.Error() + "\n")
 		}
 
-		time.Sleep(time.Second * 100)
+		time.Sleep(time.Second * 10)
 	}
 
 }

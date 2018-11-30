@@ -1,2 +1,5 @@
 log.txt
 *.exe
+log.txt
+source/
+dest/

@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/user/work/mover"
+)
+
 func main() {
-	controller()
+	mover.Controller()
 }
