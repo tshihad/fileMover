@@ -1,4 +1,4 @@
-package main
+package mover
 
 const (
 	source      = "source"
